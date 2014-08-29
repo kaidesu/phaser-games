@@ -11,6 +11,9 @@ var mainState = {
 
 		// Load coin sprite
 		game.load.image('coin', 'assets/coin.png');
+
+		// Load enemy sprite
+		game.load.image('enemy', 'assets/enemy.png');
 	},
 
 	create: function() {
@@ -44,12 +47,24 @@ var mainState = {
 		// Initialize the score variable
 		this.score = 0;
 
+		// Create an enemy group with Arcade physics
+		this.enemies = game.add.group();
+		this.enemies.enableBody = true;
+
+		// Create ten enemies with the 'enemy' image in the group
+		// The enemies are "dead" by default, so they are not visible in the game
+		this.enemies.createMultiple(10, 'enemy');
+
+		// Call 'addEnemy' every 2.2 seconds
+		game.time.events.loop(2200, this.addEnemy, this);
+
 		this.createWorld();
 	},
 
 	update: function() {
 		// Tell Phaser that the player and the walls should collide
 		game.physics.arcade.collide(this.player, this.walls);
+		game.physics.arcade.collide(this.enemies, this.walls);
 
 		this.movePlayer();
 
@@ -58,6 +73,7 @@ var mainState = {
 		}
 
 		game.physics.arcade.overlap(this.player, this.coin, this.takeCoin, null, this);
+		game.physics.arcade.overlap(this.player, this.enemies, this.playerDie, null, this);
 	},
 
 	movePlayer: function() {
@@ -149,6 +165,25 @@ var mainState = {
 
 		// Set the new position of the coin
 		this.coin.reset(newPosition.x, newPosition.y);
+	},
+
+	addEnemy: function() {
+		// Get the first dead enemy of the group
+		var enemy = this.enemies.getFirstDead();
+
+		// If there aren't any dead, do nothing
+		if (!enemy) {
+			return;
+		}
+
+		// Initialize the enemy
+		enemy.anchor.setTo(0.5, 1);
+		enemy.reset(game.world.centerX, 0);
+		enemy.body.gravity.y = 500;
+		enemy.body.velocity.x = 100 * Phaser.Math.randomSign();
+		enemy.body.bounce.x = 1;
+		enemy.checkWorldBounds = true;
+		enemy.outOfBoundsKill = true;
 	}
 };
 
